@@ -3,10 +3,23 @@
 -export([start/0]).
 -export([stop/0]).
 -export([health/0]).
+-export([insert_document/4]).
+
+
+-type index() :: binary().
+-type type() :: binary().
+-type document() :: map().
+-type id() :: binary().
+
+-export_type([index/0]).
+-export_type([type/0]).
+-export_type([document/0]).
+-export_type([id/0]).
 
 -include("mongoose.hrl").
 
 -define(POOL_NAME, elasticsearch).
+
 
 %%-------------------------------------------------------------------
 %% API
@@ -39,6 +52,16 @@ stop() ->
 -spec health() -> {error, term()} | {ok, map()}.
 health() ->
     tirerl:health(?POOL_NAME).
+
+%% @doc Tries to insert a document into given ElasticSearch index.
+-spec insert_document(index(), type(), id(), document()) -> {ok, Resp :: map()} | {error, map()}.
+insert_document(Index, Type, Id, Document) ->
+    case tirerl:insert_doc(?POOL_NAME, Index, Type, Id, Document) of
+        {ok, #{<<"_id">> := Id}} = Resp ->
+            Resp;
+        {error, _} = Err ->
+            Err
+    end.
 
 %%-------------------------------------------------------------------
 %% Helpers
